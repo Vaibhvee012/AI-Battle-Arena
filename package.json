@@ -6,23 +6,33 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx server.ts"
+    "dev": "tsx watch server.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vaibhvee012/AI-Battle-Arena.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Vaibhvee012/AI-Battle-Arena/issues"
+  },
+  "homepage": "https://github.com/Vaibhvee012/AI-Battle-Arena#readme",
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/node": "^26.5.1",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   },
   "dependencies": {
     "@langchain/cohere": "^1.1.0",
     "@langchain/core": "^1.2.11",
-    "@langchain/google": "^0.2.4",
+    "@langchain/google": "^0.2.6",
     "@langchain/langgraph": "^1.4.15",
     "@langchain/mistralai": "^1.2.0",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "langchain": "^1.5.11"
   }
 }
