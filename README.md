@@ -40,32 +40,14 @@ The result is a three-part response: solution one, solution two, and a structure
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    User["User"]
-
-    subgraph Generation["Generation Layer (parallel)"]
-        direction LR
-        Groq["Groq"]
-        Gemini["Gemini"]
-    end
-
-    Judge{"Judge<br/>(LLM)"}
-    Result["Result<br/>Solution 1<br/>Solution 2<br/>Score for both solutions"]
-
-    User -->|problem| Generation
-    Groq -->|solution_1| Judge
-    Gemini -->|solution_2| Judge
-    Judge -->|score for both solutions| Result
-    Result --> User
-```
+![Architecture diagram showing the user submitting a problem to Groq and Cohere in parallel, both feeding solutions to a Gemini judge, which returns a combined result](docs/architecture.svg)
 
 The system has three distinct layers:
 
 | Layer | Responsibility |
 | --- | --- |
-| **Generation** | Dispatches the user's problem to Groq and Gemini concurrently and collects both raw solutions. |
-| **Judging** | Passes both solutions to a judge model with a scoring rubric and returns a structured verdict. |
+| **Generation** | Dispatches the user's problem to Groq and Cohere concurrently and collects both raw solutions. |
+| **Judging** | Passes both solutions to Gemini, acting as an independent judge, with a scoring rubric and returns a structured verdict. |
 | **Presentation** | Renders both solutions alongside the judge's scores and reasoning for the user. |
 
 ---
@@ -83,7 +65,7 @@ The problem is dispatched simultaneously to both providers. Because the two call
 ```js
 const [solutionOne, solutionTwo] = await Promise.all([
   generateWithGroq(problem),
-  generateWithGemini(problem)
+  generateWithCohere(problem)
 ]);
 ```
 
@@ -91,7 +73,7 @@ If one provider fails or times out, the system degrades gracefully by reporting 
 
 **3. Judging**
 
-Both solutions are passed to the judge model in a single prompt containing the original problem, the two candidate solutions, and an explicit scoring rubric. The judge is instructed to return strict JSON so the output can be parsed reliably:
+Both solutions are passed to Gemini in a single prompt containing the original problem, the two candidate solutions, and an explicit scoring rubric. Gemini acts purely as an evaluator here — it does not generate a competing solution of its own — which keeps it neutral with respect to the two providers it is judging. It is instructed to return strict JSON so the output can be parsed reliably:
 
 ```json
 {
@@ -115,8 +97,8 @@ The API returns both solutions and the judge's verdict as a single payload. The 
 | Frontend | React, Vite |
 | Backend | Node.js, Express |
 | Model Provider A | Groq |
-| Model Provider B | Google Gemini |
-| Judge Model | *(specify which model you used as the judge)* |
+| Model Provider B | Cohere |
+| Judge Model | Google Gemini |
 | HTTP Client | Axios |
 | Environment Config | dotenv |
 
@@ -130,6 +112,7 @@ The API returns both solutions and the judge's verdict as a single payload. The 
 
 - Node.js 18 or higher
 - A Groq API key
+- A Cohere API key
 - A Google Gemini API key
 
 ### Installation
@@ -182,6 +165,7 @@ Create a `.env` file in the backend directory:
 ```env
 PORT=3000
 GROQ_API_KEY=your_groq_api_key
+COHERE_API_KEY=your_cohere_api_key
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
@@ -212,7 +196,7 @@ Submits a problem for dual generation and judging.
     "content": "..."
   },
   "solution_2": {
-    "model": "gemini",
+    "model": "cohere",
     "content": "..."
   },
   "evaluation": {
@@ -242,7 +226,7 @@ Submits a problem for dual generation and judging.
 ├── backend
 │   ├── src
 │   │   ├── controllers      # Request handlers
-│   │   ├── services         # Groq, Gemini, and judge integrations
+│   │   ├── services         # Groq, Cohere, and Gemini (judge) integrations
 │   │   ├── routes           # API route definitions
 │   │   └── app.js           # Express application setup
 │   ├── server.js            # Entry point
